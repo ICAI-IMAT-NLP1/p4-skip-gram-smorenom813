@@ -20,14 +20,14 @@ def main():
     
     embedding_dim = 300
     batch_size = 512
-    epochs = 5
+    epochs = 2
     learning_rate = 0.003
     window_size = 5
     print_every = 1500
     runs_folder = "runs"  # Folder to save models
     model_filename = "skipgram_model.pth"  # Filename to save the model
     model_path = os.path.join(runs_folder, model_filename)  # Full path to the model
-    train_model = True
+    train_model = False
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     print("Step 1: Loading and preprocessing data...")
@@ -75,3 +75,12 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+"""
+Veo que los embeddings tienen sentido ya que palabras que se relacionan estan cerca
+como greek y british hablando de paises o country y empire tambien estan cerca. Esto indica que
+esta bien entrenado, reune parabras cercanas.
+
+
+"""

@@ -18,52 +18,44 @@ def train_skipgram(model: SkipGramNeg,
                    window_size=5, 
                    print_every=1500,
                    device='cpu'):
-    """Trains the SkipGram model using negative sampling.
-
-    Args:
-        model: The SkipGram model to be trained.
-        words: A list of words (integers) to train on.
-        int_to_vocab: A dictionary mapping integers back to vocabulary words.
-        batch_size: The size of each batch of input and target words.
-        epochs: The number of epochs to train for.
-        learning_rate: The learning rate for the optimizer.
-        window_size: The size of the context window for generating training pairs.
-        print_every: The frequency of printing the training loss and validation examples.
-        device: The device (CPU or GPU) where the tensors will be allocated.
-    """
-    # Define loss and optimizer
-    # TODO
-    criterion = None
+    """Trains the SkipGram model using negative sampling."""
+    
+    # Definir la función de pérdida
+    criterion = NegativeSamplingLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     steps = 0
-    # Training loop
+    model.to(device)  # Mover el modelo al dispositivo adecuado
+
+    # Bucle de entrenamiento
     for epoch in range(epochs):
-        for input_words, target_words in None:
+        for input_words, target_words in get_batches(words, batch_size, window_size):
             steps += 1
-            # Convert inputs and context words into tensors
-            inputs, targets = torch.LongTensor(input_words), torch.LongTensor(target_words)
-            inputs, targets = inputs.to(device), targets.to(device)
 
-            # input, output, and noise vectors
-            # TODO
-            input_vectors = None
-            output_vectors = None
-            noise_vectors = None
-            
-            # negative sampling loss
-            # TODO
-            loss = criterion(None, None, None)
+            # Convertir inputs y context words en tensores
+            inputs = torch.LongTensor(input_words).to(device)
 
-            # Backward step
-            # TODO
+            targets = torch.LongTensor(target_words).to(device)
+
+            # Obtener input, output y noise vectors
+            input_vectors = model.forward_input(inputs)  # (batch_size, embed_size)
+            output_vectors = model.out_embed(targets)  # (batch_size, embed_size)
+            noise_vectors = model.forward_noise(inputs.shape[0], n_samples=5)  # (batch_size, n_samples, embed_size)
+
+            # Calcular la pérdida
+            loss = criterion(input_vectors, output_vectors, noise_vectors)
+
+            # Paso de optimización
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
             if steps % print_every == 0:
                 print(f"Epoch: {epoch+1}/{epochs}, Step: {steps}, Loss: {loss.item()}")
-                # Cosine similarity
-                # TODO
-                valid_examples, valid_similarities = cosine_similarity(None, device=device)
-                _, closest_idxs = valid_similarities.topk(6)
+
+                # Calcular similitud coseno con palabras de validación
+                valid_examples, valid_similarities = cosine_similarity(model.in_embed, device=device)
+                _, closest_idxs = valid_similarities.topk(6)  # Top 6 más cercanos
 
                 valid_examples, closest_idxs = valid_examples.to('cpu'), closest_idxs.to('cpu')
                 for ii, valid_idx in enumerate(valid_examples):
